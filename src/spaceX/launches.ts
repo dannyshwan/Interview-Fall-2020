@@ -7,6 +7,7 @@ export interface ILaunch {
   rocket_name?: string;
   rocket_type?: string;
   details?: string;
+  launch_date_utc?: string;
   launch_success?: boolean;
   error?: string;
 }
@@ -50,6 +51,56 @@ export class Launches {
     return res.json();
   }
 
+
+  /**
+   * Get launches by range
+   * @param start Date in YYYY-MM-DD format
+   * @param end Date in YYYY-MM-DD format
+   */
+
+  public async getLaunchesByRange(start: string, end: string): Promise<any>{
+    try{
+      const getStartDateAsMoment = moment(start,'YYYY-MM-DD'); //get start date as a moment
+      const getEndDateAsMoment = moment(end,'YYYY-MM-DD'); //get end date as a moment
+
+      //Check if starting date is valid
+      if (!getStartDateAsMoment.isValid() || !getStartDateAsMoment.isSameOrBefore(moment())) {
+        return [{ error: 'invalid start date' }];
+      }
+      //Check if end date is valid
+      else if(!getEndDateAsMoment.isValid() || !getEndDateAsMoment.isSameOrBefore(moment())){
+        return [{ error: 'invalid end date' }];
+      }
+      //Check that start date is not after end date
+      else if(!getStartDateAsMoment.isBefore(getEndDateAsMoment)){
+        return [{ error: 'end date must be after start date' }];
+      }
+
+      // Get the parsed request
+      const parsed = await this.requestLaunchesByRange(start, end);
+      // Maps and creates the return list
+      return this.filterFields(parsed);
+    }
+    catch(e){
+      console.log(e);
+      return [
+        {
+          error: `An error has occurred while trying to retrieve launches`,
+        },
+      ];
+    }
+  }
+
+
+  /**
+   * Makes the api request for launches per year
+   * @param year
+   */
+  async requestLaunchesByRange(start: string, end:string): Promise<any[]> {
+    const res = await fetch(`${this.url}?start=${start}&end=${end}`);
+    return res.json();
+  }
+
   /**
    * Helpers
    */
@@ -62,6 +113,7 @@ export class Launches {
     return data.map((p) => ({
       flight_number: p.flight_number,
       mission_name: p.mission_name,
+      launch_date_utc: p.launch_date_utc,
       rocket_name: p.rocket?.rocket_name,
       rocket_type: p.rocket?.rocket_type,
       details: p.details,

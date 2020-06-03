@@ -20,6 +20,15 @@ app.get('/yearly-launches', async (request: any, response: any) => {
   response.send(result);
 });
 
+// Handle get requests to /nasa
+app.get('/launches-by-range', async (request: any, response: any) => {
+  const daily = new Launches();
+  // Sends in start and end date as a formatted string
+  const result = await daily.getLaunchesByRange(request.query.start, request.query.end);
+  // Sends back the result of the image getter
+  response.send(result);
+});
+
 // start the Express server
 app.listen(port, () => {
   // tslint:disable-next-line:no-console
